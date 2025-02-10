@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import  { ReqResUserListResponse, User } from "../interfaces/reques.interface";
 
@@ -15,9 +15,17 @@ import  { ReqResUserListResponse, User } from "../interfaces/reques.interface";
   //}
 
   //si todo sale bien va a retornar un promisse user tap : Promise<User[]>
-  const loadUser = async (): Promise<User[]> => {
+
+
+//opciones dentro del objeto de configuracion e axios
+
+  const loadUser = async (page:number=1): Promise<User[]> => {
     try {
-      const { data } = await axios.get<ReqResUserListResponse>('https://reqres.in/api/users');
+      const { data } = await axios.get<ReqResUserListResponse>('https://reqres.in/api/users', {
+        params: {
+          page: page
+        }
+      });
       return data.data;
     } catch (error) {
       console.log("error");
@@ -29,8 +37,9 @@ import  { ReqResUserListResponse, User } from "../interfaces/reques.interface";
 export const UserPage = () => {
     //users como un arreglo: <User[]>([])
 const [users, setUsers] = useState<User[]>([]); 
+const currentPageRef = useRef(1);
 
-
+//paginacion en esta area necesito saber en que pagina estoy
 
   //fecht api
   /*
@@ -69,13 +78,34 @@ useEffect(()=>{
 
     //lo que sea que loadUser retorne imediatamente se lo va a establecer al setUsers
 
-    loadUser().then(setUsers)
+    loadUser(currentPageRef.current)
+    .then(setUsers)
+
   }, []);
 
 
   //vamos a mostrar usuarios en pantalla usando una piesa de estado 
   // usando use state , pude ser con sustan pero mejor con usestate
 
+//cuando toco el boton next quiero la siguiente pagina
+
+const nextPage = async()=>{    
+    currentPageRef.current++;
+    const users = await loadUser(currentPageRef.current);
+    if(users.length>0){
+        setUsers(users)
+    }else{
+        currentPageRef.current--;
+    }
+}
+
+const prevPage = async()=>{
+    if(currentPageRef.current <= 1) return;
+
+    currentPageRef.current--;
+    const users: User[] = await loadUser(currentPageRef.current);
+    setUsers(users);
+}
 
 
   return (
@@ -99,6 +129,12 @@ useEffect(()=>{
         }
     </tbody>
 </table>
+
+
+<div>
+    <button onClick={prevPage}>Prev</button>
+    <button onClick={nextPage}>Next</button>
+</div>
 
   </>
   );
