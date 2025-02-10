@@ -1,13 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { ReqResUserListResponse, User } from "../interfaces/reques.interface";
+import  { ReqResUserListResponse, User } from "../interfaces/reques.interface";
 
-
-
-export const UserPage = () => {
-
-
-
+//para que solo las importe como un tipo : import type { ReqResUserListResponse, User } from "../interfaces/reques.interface";
 
   // duncion asincrona que evidentemente retornara una promesa
 
@@ -22,15 +17,20 @@ export const UserPage = () => {
   //si todo sale bien va a retornar un promisse user tap : Promise<User[]>
   const loadUser = async (): Promise<User[]> => {
     try {
-      const { data } = await axios.get<ReqResUserListResponse>(
-        "https://reqres.in/api/users"
-      );
+      const { data } = await axios.get<ReqResUserListResponse>('https://reqres.in/api/users');
       return data.data;
     } catch (error) {
       console.log("error");
       return [];
     }
   };
+
+
+export const UserPage = () => {
+    //users como un arreglo: <User[]>([])
+const [users, setUsers] = useState<User[]>([]); 
+
+
 
   //fecht api
   /*
@@ -61,7 +61,15 @@ useEffect(()=>{
 
   useEffect(() => {
     //aqui hacemos la llamada de los users si todo sale bien then
-    loadUser().then((users) => console.log(users));
+    //loadUser().then((users) => console.log(users));
+
+    /*loadUser()
+    .then((users) => setUsers(users));*/
+
+
+    //lo que sea que loadUser retorne imediatamente se lo va a establecer al setUsers
+
+    loadUser().then(setUsers)
   }, []);
 
 
@@ -70,5 +78,46 @@ useEffect(()=>{
 
 
 
-  return <div>UserPage</div>;
+  return (
+  <>
+<table>
+    <thead>
+        <tr>
+        <th>Avatar</th>
+            <th>Nombre</th>
+            <th>Email</th>   
+        </tr>
+    </thead>
+
+    {/*crearemos un componente especializado nos ayuda a memorizar los datos */}
+
+    <tbody>
+        {
+        users.map(user => (
+            <UserRow key={user.id} user={user} />
+        ))
+        }
+    </tbody>
+</table>
+
+  </>
+  );
 };
+
+
+//podemos recibir ls properties como sea pero lo mejor es mediante una interfaz
+
+interface Props{
+    user: User;
+}
+
+export const UserRow = ({user}: Props) => {
+  const {avatar, first_name, last_name, email} = user;
+  return (
+    <tr key={user.id}>  
+    <td><img style={{width:'50px'}} src={avatar} alt="avatar" /></td>
+    <td>{first_name} {last_name}</td>
+    <td>{email}</td>
+</tr>
+  )
+}
